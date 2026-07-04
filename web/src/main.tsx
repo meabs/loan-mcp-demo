@@ -9,6 +9,8 @@ import {
   Home,
   Leaf,
   PiggyBank,
+  ReceiptText,
+  TrendingUp,
   Sparkles
 } from "lucide-react";
 import "./styles.css";
@@ -164,6 +166,48 @@ function currency(value: number) {
   return `GBP ${Math.round(value).toLocaleString("en-GB")}`;
 }
 
+function repayment(amount: number, apr: number, termMonths: number) {
+  const monthlyRate = apr / 100 / 12;
+  if (monthlyRate === 0) return amount / termMonths;
+  return (amount * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -termMonths));
+}
+
+function purposeInsight(journey: Journey, bestOption: Option | undefined) {
+  const monthlyPayment = bestOption?.monthlyPayment ?? journey.affordability.estimatedMonthlyPayment;
+  const paymentShare = Math.round((monthlyPayment / Math.max(journey.input.monthlyIncome, 1)) * 100);
+
+  if (journey.selectedPurpose === "debt_consolidation") {
+    const monthlyDifference = journey.input.monthlyCommitments - monthlyPayment;
+    return {
+      title: "Consolidation impact",
+      value: monthlyDifference >= 0 ? `${currency(monthlyDifference)} lower` : `${currency(Math.abs(monthlyDifference))} higher`,
+      detail: "Compares current monthly commitments with the selected loan repayment."
+    };
+  }
+
+  if (journey.selectedPurpose === "green_upgrade") {
+    return {
+      title: "Green works readiness",
+      value: journey.input.requestedAmount >= 7500 ? "Quote needed" : "Light-touch",
+      detail: "A supplier quote or works summary would support a cleaner application."
+    };
+  }
+
+  if (journey.selectedPurpose === "car") {
+    return {
+      title: "Car payment ratio",
+      value: `${paymentShare}% of income`,
+      detail: "Shows the repayment as a share of monthly income before final checks."
+    };
+  }
+
+  return {
+    title: "Budget fit",
+    value: `${paymentShare}% of income`,
+    detail: "Keeps the borrower focused on payment comfort, not just maximum borrowing."
+  };
+}
+
 function coerceJourney(value: unknown): Journey {
   if (value && typeof value === "object" && "affordability" in value && "input" in value) {
     return value as Journey;
@@ -187,6 +231,10 @@ function App() {
   const [pulseKey, setPulseKey] = useState(0);
   const bestOption = journey.options.find((option) => option.id === selectedProductId) ?? journey.options[0];
   const progress = Math.min(100, Math.max(8, Math.round((journey.affordability.estimatedMonthlyPayment / journey.affordability.paymentCap) * 100)));
+  const stressApr = (bestOption?.representativeApr ?? 7.2) + 2;
+  const stressedPayment = Math.round(repayment(journey.input.requestedAmount + (bestOption?.arrangementFee ?? 0), stressApr, journey.input.termMonths));
+  const stressDelta = Math.max(stressedPayment - (bestOption?.monthlyPayment ?? journey.affordability.estimatedMonthlyPayment), 0);
+  const insight = purposeInsight(journey, bestOption);
 
   function updateInput(next: Partial<JourneyInput>) {
     const updated = { ...journey.input, ...next };
@@ -247,7 +295,7 @@ function App() {
         <article className="journey-tile input-tile">
           <PanelTitle eyebrow="1" icon={<HandCoins size={18} />} title="Customer needs" />
           <div className="purpose-row" aria-label="Loan purpose">
-            {purposes.slice(0, 4).map((purpose) => (
+            {purposes.map((purpose) => (
               <button
                 key={purpose.id}
                 className={purpose.id === journey.selectedPurpose ? "purpose-chip active" : "purpose-chip"}
@@ -342,6 +390,28 @@ function App() {
             </button>
           </div>
           <small>{isRefreshing ? "Updating options..." : "Illustrative only. Not financial advice."}</small>
+        </article>
+
+        <article className="journey-tile">
+          <PanelTitle eyebrow="5" icon={<TrendingUp size={18} />} title="Rate stress test" />
+          <div className="stress-grid">
+            <Metric label={`At ${stressApr.toFixed(1)}% APR`} value={currency(stressedPayment)} pulseKey={pulseKey} />
+            <Metric label="Monthly increase" value={currency(stressDelta)} pulseKey={pulseKey} />
+          </div>
+          <p className="tile-note">Shows how the repayment could move if pricing is 2 percentage points higher than the selected option.</p>
+        </article>
+
+        <article className="journey-tile">
+          <PanelTitle eyebrow="6" icon={<ReceiptText size={18} />} title={insight.title} />
+          <div className="insight-callout">
+            <strong>{insight.value}</strong>
+            <p>{insight.detail}</p>
+          </div>
+          <div className="mini-checklist">
+            <span>Income captured</span>
+            <span>Commitments captured</span>
+            <span>{journey.input.dependants > 0 ? "Household buffer applied" : "No dependant buffer"}</span>
+          </div>
         </article>
       </section>
     </main>
