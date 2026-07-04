@@ -9,6 +9,7 @@ import {
   Check,
   ChevronRight,
   ClipboardList,
+  HandCoins,
   Home,
   Leaf,
   LineChart,
@@ -201,6 +202,7 @@ function App() {
   const [guidedStep, setGuidedStep] = useState(0);
   const [isGuided, setIsGuided] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
+  const [activeStep, setActiveStep] = useState(1);
   const bestOption = journey.options.find((option) => option.id === selectedProductId) ?? journey.options[0];
   const progress = Math.min(100, Math.max(8, Math.round((journey.affordability.estimatedMonthlyPayment / journey.affordability.paymentCap) * 100)));
 
@@ -222,6 +224,7 @@ function App() {
     const current = script[guidedStep % script.length];
     const timeout = window.setTimeout(() => {
       refreshOptions(current);
+      setActiveStep(2 + (guidedStep % 3));
       setGuidedStep((step) => step + 1);
     }, guidedStep === 0 ? 250 : 1900);
 
@@ -232,12 +235,14 @@ function App() {
     const updated = { ...journey.input, ...next };
     const nextJourney = { ...journey, input: updated };
     setJourney(nextJourney);
+    setActiveStep(1);
     window.openai?.setWidgetState?.({ input: updated, selectedProductId });
   }
 
   async function refreshOptions(next?: Partial<Journey>) {
     const merged = { ...journey, ...next, input: { ...journey.input, ...next?.input } };
     setJourney(merged);
+    setActiveStep(2);
     setPulseKey((key) => key + 1);
     setIsRefreshing(true);
     try {
@@ -256,6 +261,7 @@ function App() {
           affordability: structured.affordability ?? merged.affordability
         };
         setJourney(nextJourney);
+        setActiveStep(3);
         setPulseKey((key) => key + 1);
         setSelectedProductId(nextJourney.options[0]?.id ?? selectedProductId);
       }
@@ -272,6 +278,7 @@ function App() {
     setIntroVisible(false);
     setIsGuided((value) => !value);
     setGuidedStep(0);
+    setActiveStep(1);
   }
 
   return (
@@ -304,19 +311,19 @@ function App() {
           </div>
           <div>
             <p className="kicker">Greenbridge Bank</p>
-            <h1>Loan journey cockpit</h1>
+            <h1>Find a loan the customer can afford</h1>
           </div>
         </div>
         <div className="hero-actions">
           <button className={isGuided ? "guided-button active" : "guided-button"} onClick={toggleGuidedDemo}>
             <Play size={16} />
-            <span>{isGuided ? "Stop demo" : "Start guided demo"}</span>
+            <span>{isGuided ? "Stop demo mode" : "Watch demo mode"}</span>
           </button>
           <button className="icon-button" title="Request fullscreen" onClick={() => window.openai?.requestDisplayMode?.({ mode: "fullscreen" })}>
             <ArrowRight size={18} />
           </button>
         </div>
-        <p className="hero-copy">Explore borrowing power, compare illustrative products, and move from intent to a ready application checklist.</p>
+        <p className="hero-copy">Start on the left: choose the loan purpose, amount, term, and customer scenario. The affordability view and product options update in this frame.</p>
         <div className="hero-metrics">
           <Metric label="Monthly estimate" value={currency(journey.affordability.estimatedMonthlyPayment)} pulseKey={pulseKey} />
           <Metric label="Comfort guardrail" value={currency(journey.affordability.paymentCap)} pulseKey={pulseKey} />
@@ -324,10 +331,15 @@ function App() {
         </div>
       </section>
 
-      <section className="journey-strip">
-        {(journey.timeline ?? fallbackJourney.timeline ?? []).map((item, index) => (
-          <div className={`journey-step ${item.status}`} key={item.label} style={{ "--delay": `${index * 90}ms` } as React.CSSProperties}>
-            <span>{item.status === "complete" ? <Check size={14} /> : <ChevronRight size={14} />}</span>
+      <section className="flow-strip" aria-label="Loan journey steps">
+        {[
+          { number: 1, label: "Enter needs", detail: "Purpose, amount, term, scenario" },
+          { number: 2, label: "Check affordability", detail: "Monthly comfort and headroom" },
+          { number: 3, label: "Compare options", detail: "APR, repayment, fit score" },
+          { number: 4, label: "Next steps", detail: "Explain or prepare checklist" }
+        ].map((item, index) => (
+          <div className={activeStep === item.number ? "flow-step active" : "flow-step"} key={item.label} style={{ "--delay": `${index * 90}ms` } as React.CSSProperties}>
+            <span>{item.number}</span>
             <div>
               <strong>{item.label}</strong>
               <small>{item.detail}</small>
@@ -338,8 +350,14 @@ function App() {
 
       <section className="workspace-grid">
         <aside className="control-panel reveal-panel" style={{ "--delay": "80ms" } as React.CSSProperties}>
-          <PanelTitle icon={<SlidersHorizontal size={18} />} title="Borrowing shape" />
+          <PanelTitle eyebrow="Step 1" icon={<HandCoins size={18} />} title="Enter customer needs" />
+          <p className="panel-help">These are the main controls. Change them, then review the affordability and products to the right.</p>
 
+          <div className="field-block">
+            <div className="field-heading">
+              <strong>Loan purpose</strong>
+              <span>Choose one</span>
+            </div>
           <div className="purpose-grid">
             {purposes.map((purpose) => (
               <button
@@ -351,6 +369,7 @@ function App() {
                 <span>{purpose.label}</span>
               </button>
             ))}
+          </div>
           </div>
 
           <Field label="Loan amount" value={currency(journey.input.requestedAmount)}>
@@ -379,6 +398,11 @@ function App() {
             />
           </Field>
 
+          <div className="field-block">
+            <div className="field-heading">
+              <strong>Customer scenario</strong>
+              <span>Demo data</span>
+            </div>
           <div className="scenario-row">
             {scenarios.map((scenario) => (
               <button
@@ -391,10 +415,17 @@ function App() {
               </button>
             ))}
           </div>
+          </div>
+
+          <button className="primary-action" onClick={() => refreshOptions()}>
+            Update affordability and options
+            <ArrowRight size={17} />
+          </button>
+          {isGuided ? <p className="mode-note">Demo mode is cycling examples. Stop it to enter values manually.</p> : null}
         </aside>
 
         <section className="affordability-panel reveal-panel" style={{ "--delay": "170ms" } as React.CSSProperties}>
-          <PanelTitle icon={<Calculator size={18} />} title="Affordability lens" />
+          <PanelTitle eyebrow="Step 2" icon={<Calculator size={18} />} title="Check affordability" />
           <div className="status-block">
             <div>
               <p className="eyebrow">Current view</p>
@@ -421,7 +452,7 @@ function App() {
         </section>
 
         <section className="products-panel reveal-panel" style={{ "--delay": "260ms" } as React.CSSProperties}>
-          <PanelTitle icon={<Banknote size={18} />} title="Illustrative options" />
+          <PanelTitle eyebrow="Step 3" icon={<Banknote size={18} />} title="Compare loan options" />
           <div className={isRefreshing ? "product-list refreshing" : "product-list"}>
             {journey.options.map((option, index) => (
               <button
@@ -451,7 +482,7 @@ function App() {
         </section>
 
         <section className="detail-panel reveal-panel" style={{ "--delay": "350ms" } as React.CSSProperties}>
-          <PanelTitle icon={<ClipboardList size={18} />} title="Next best action" />
+          <PanelTitle eyebrow="Step 4" icon={<ClipboardList size={18} />} title="Choose the next best action" />
           {bestOption ? (
             <>
               <div className="selected-product">
@@ -504,11 +535,14 @@ function Metric({ label, value, pulseKey }: { label: string; value: string; puls
   );
 }
 
-function PanelTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+function PanelTitle({ eyebrow, icon, title }: { eyebrow?: string; icon: React.ReactNode; title: string }) {
   return (
     <div className="panel-title">
       <span>{icon}</span>
-      <strong>{title}</strong>
+      <div>
+        {eyebrow ? <small>{eyebrow}</small> : null}
+        <strong>{title}</strong>
+      </div>
     </div>
   );
 }
