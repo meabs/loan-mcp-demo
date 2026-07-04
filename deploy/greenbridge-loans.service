@@ -1,0 +1,16 @@
+[Unit]
+Description=Greenbridge Loans MCP Demo
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/greenbridge-loans
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=PUBLIC_BASE_URL=https://loan.mcp.meaburn.com
+ExecStart=/usr/bin/node server/dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
