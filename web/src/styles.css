@@ -1143,3 +1143,259 @@ input[type="range"] {
     display: none;
   }
 }
+
+.tile-shell {
+  min-height: auto;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 14px;
+  background: #f5f7f2;
+}
+
+.tile-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+  border: 1px solid rgba(15, 67, 46, 0.12);
+  border-radius: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #073c2b, #0d5a3e);
+  color: white;
+}
+
+.tile-header h1 {
+  max-width: none;
+  margin: 0 0 6px;
+  font-size: clamp(1.45rem, 4vw, 2.4rem);
+  line-height: 1.08;
+}
+
+.tile-header p {
+  max-width: 760px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  line-height: 1.45;
+}
+
+.tile-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.tile-header .icon-button {
+  color: #123b2b;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.tile-board {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr 0.9fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.journey-tile {
+  min-height: 286px;
+  border: 1px solid rgba(15, 67, 46, 0.12);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 14px 28px rgba(28, 49, 38, 0.07);
+}
+
+.input-tile {
+  border-color: rgba(11, 92, 63, 0.26);
+}
+
+.purpose-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.purpose-chip,
+.scenario-pill,
+.option-tile {
+  border: 1px solid rgba(18, 69, 50, 0.13);
+  border-radius: 8px;
+  color: #17372b;
+  background: #ffffff;
+}
+
+.purpose-chip {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  min-height: 42px;
+  align-items: center;
+  gap: 7px;
+  padding: 9px;
+  font-size: 0.86rem;
+  font-weight: 760;
+  text-align: left;
+}
+
+.purpose-chip.active,
+.scenario-pill.active,
+.option-tile.active {
+  border-color: #0b5c3f;
+  background: #f4fbf3;
+  box-shadow: inset 0 0 0 1px rgba(11, 92, 63, 0.12);
+}
+
+.tile-shell .field {
+  margin: 10px 0;
+  padding: 10px;
+}
+
+.income-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.number-field {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(15, 67, 46, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8fbf5;
+}
+
+.number-field span {
+  color: #52665c;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.number-field input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 8px;
+  color: #10231c;
+  background: #ffffff;
+  font-weight: 780;
+}
+
+.tile-metric-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tile-shell .metric {
+  padding: 10px;
+}
+
+.tile-shell .metric strong {
+  font-size: 1rem;
+}
+
+.tile-status {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.tile-status strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #102f23;
+  font-size: 1.08rem;
+}
+
+.tile-status p,
+.action-tile p {
+  margin: 0;
+  color: #52665c;
+  line-height: 1.45;
+}
+
+.radial.compact {
+  width: 92px;
+  height: 92px;
+}
+
+.radial.compact span {
+  font-size: 1.22rem;
+}
+
+.radial.compact small {
+  margin-top: 28px;
+}
+
+.option-tile {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  padding: 12px;
+  text-align: left;
+}
+
+.option-tile strong {
+  color: #102f23;
+  font-size: 1.04rem;
+}
+
+.option-tile small,
+.action-tile > small {
+  color: #61746a;
+}
+
+.option-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.option-summary span {
+  border-radius: 8px;
+  padding: 8px;
+  color: #113d2d;
+  background: #f3f7f0;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.compact-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 14px 0 10px;
+}
+
+.compact-actions button {
+  justify-content: center;
+}
+
+@media (max-width: 980px) {
+  .tile-board {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .tile-shell {
+    padding: 10px;
+  }
+
+  .tile-header,
+  .tile-board {
+    grid-template-columns: 1fr;
+  }
+
+  .tile-header-actions {
+    justify-content: flex-start;
+  }
+
+  .journey-tile {
+    min-height: auto;
+  }
+}

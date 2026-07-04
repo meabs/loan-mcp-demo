@@ -1,22 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
-  BadgeCheck,
   Banknote,
-  Building2,
   Calculator,
-  Check,
-  ChevronRight,
   ClipboardList,
   HandCoins,
   Home,
   Leaf,
-  LineChart,
   PiggyBank,
-  Play,
-  ShieldCheck,
-  SlidersHorizontal,
   Sparkles
 } from "lucide-react";
 import "./styles.css";
@@ -168,12 +160,6 @@ const purposes: Array<{ id: Purpose; label: string; icon: React.ReactNode }> = [
   { id: "green_upgrade", label: "Green", icon: <Leaf size={18} /> }
 ];
 
-const scenarios: Array<{ id: Scenario; label: string; tone: string }> = [
-  { id: "strong", label: "Strong", tone: "More headroom" },
-  { id: "balanced", label: "Balanced", tone: "Typical borrower" },
-  { id: "stretched", label: "Stretched", tone: "Needs care" }
-];
-
 function currency(value: number) {
   return `GBP ${Math.round(value).toLocaleString("en-GB")}`;
 }
@@ -198,51 +184,20 @@ function App() {
   const [journey, setJourney] = useState<Journey>(initial);
   const [selectedProductId, setSelectedProductId] = useState(initial.options[0]?.id ?? "");
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [introVisible, setIntroVisible] = useState(true);
-  const [guidedStep, setGuidedStep] = useState(0);
-  const [isGuided, setIsGuided] = useState(false);
   const [pulseKey, setPulseKey] = useState(0);
-  const [activeStep, setActiveStep] = useState(1);
   const bestOption = journey.options.find((option) => option.id === selectedProductId) ?? journey.options[0];
   const progress = Math.min(100, Math.max(8, Math.round((journey.affordability.estimatedMonthlyPayment / journey.affordability.paymentCap) * 100)));
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setIntroVisible(false), 2200);
-    return () => window.clearTimeout(timeout);
-  }, []);
-
-  useEffect(() => {
-    if (!isGuided) return;
-
-    const script: Array<Partial<Journey> & { input?: Partial<JourneyInput> }> = [
-      { selectedPurpose: "green_upgrade", scenario: "strong", input: { requestedAmount: 8500, termMonths: 48 } },
-      { selectedPurpose: "green_upgrade", scenario: "balanced", input: { requestedAmount: 16000, termMonths: 72 } },
-      { selectedPurpose: "home_improvement", scenario: "balanced", input: { requestedAmount: 22000, termMonths: 84 } },
-      { selectedPurpose: "debt_consolidation", scenario: "stretched", input: { requestedAmount: 12000, termMonths: 60 } }
-    ];
-
-    const current = script[guidedStep % script.length];
-    const timeout = window.setTimeout(() => {
-      refreshOptions(current);
-      setActiveStep(2 + (guidedStep % 3));
-      setGuidedStep((step) => step + 1);
-    }, guidedStep === 0 ? 250 : 1900);
-
-    return () => window.clearTimeout(timeout);
-  }, [guidedStep, isGuided]);
 
   function updateInput(next: Partial<JourneyInput>) {
     const updated = { ...journey.input, ...next };
     const nextJourney = { ...journey, input: updated };
     setJourney(nextJourney);
-    setActiveStep(1);
     window.openai?.setWidgetState?.({ input: updated, selectedProductId });
   }
 
   async function refreshOptions(next?: Partial<Journey>) {
     const merged = { ...journey, ...next, input: { ...journey.input, ...next?.input } };
     setJourney(merged);
-    setActiveStep(2);
     setPulseKey((key) => key + 1);
     setIsRefreshing(true);
     try {
@@ -261,7 +216,6 @@ function App() {
           affordability: structured.affordability ?? merged.affordability
         };
         setJourney(nextJourney);
-        setActiveStep(3);
         setPulseKey((key) => key + 1);
         setSelectedProductId(nextJourney.options[0]?.id ?? selectedProductId);
       }
@@ -274,95 +228,29 @@ function App() {
     await window.openai?.sendFollowUpMessage?.({ prompt, scrollToBottom: true });
   }
 
-  function toggleGuidedDemo() {
-    setIntroVisible(false);
-    setIsGuided((value) => !value);
-    setGuidedStep(0);
-    setActiveStep(1);
-  }
-
   return (
-    <main className={introVisible ? "app-shell intro-active" : "app-shell"}>
-      {introVisible ? (
-        <section className="launch-overlay" aria-label="Greenbridge launch sequence">
-          <div className="launch-grid" />
-          <div className="launch-ring">
-            <Building2 size={38} />
-          </div>
-          <div className="launch-copy">
-            <span>Greenbridge Bank</span>
-            <strong>Loan intelligence online</strong>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="hero-band">
-        <div className="motion-field" aria-hidden="true">
-          <span className="motion-line line-a" />
-          <span className="motion-line line-b" />
-          <span className="motion-line line-c" />
-          <span className="motion-node node-a" />
-          <span className="motion-node node-b" />
-          <span className="motion-node node-c" />
+    <main className="app-shell tile-shell">
+      <section className="tile-header">
+        <div>
+          <p className="kicker">Greenbridge Bank</p>
+          <h1>Loan options at a glance</h1>
+          <p>Adjust the customer needs tile, then review affordability, product fit, and next actions without leaving this card.</p>
         </div>
-        <div className="brand-lockup">
-          <div className="brand-mark">
-            <Building2 size={22} />
-          </div>
-          <div>
-            <p className="kicker">Greenbridge Bank</p>
-            <h1>Find a loan the customer can afford</h1>
-          </div>
-        </div>
-        <div className="hero-actions">
-          <button className={isGuided ? "guided-button active" : "guided-button"} onClick={toggleGuidedDemo}>
-            <Play size={16} />
-            <span>{isGuided ? "Stop demo mode" : "Watch demo mode"}</span>
-          </button>
+        <div className="tile-header-actions">
           <button className="icon-button" title="Request fullscreen" onClick={() => window.openai?.requestDisplayMode?.({ mode: "fullscreen" })}>
             <ArrowRight size={18} />
           </button>
         </div>
-        <p className="hero-copy">Start on the left: choose the loan purpose, amount, term, and customer scenario. The affordability view and product options update in this frame.</p>
-        <div className="hero-metrics">
-          <Metric label="Monthly estimate" value={currency(journey.affordability.estimatedMonthlyPayment)} pulseKey={pulseKey} />
-          <Metric label="Comfort guardrail" value={currency(journey.affordability.paymentCap)} pulseKey={pulseKey} />
-          <Metric label="Confidence" value={journey.affordability.confidence} pulseKey={pulseKey} />
-        </div>
       </section>
 
-      <section className="flow-strip" aria-label="Loan journey steps">
-        {[
-          { number: 1, label: "Enter needs", detail: "Purpose, amount, term, scenario" },
-          { number: 2, label: "Check affordability", detail: "Monthly comfort and headroom" },
-          { number: 3, label: "Compare options", detail: "APR, repayment, fit score" },
-          { number: 4, label: "Next steps", detail: "Explain or prepare checklist" }
-        ].map((item, index) => (
-          <div className={activeStep === item.number ? "flow-step active" : "flow-step"} key={item.label} style={{ "--delay": `${index * 90}ms` } as React.CSSProperties}>
-            <span>{item.number}</span>
-            <div>
-              <strong>{item.label}</strong>
-              <small>{item.detail}</small>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="workspace-grid">
-        <aside className="control-panel reveal-panel" style={{ "--delay": "80ms" } as React.CSSProperties}>
-          <PanelTitle eyebrow="Step 1" icon={<HandCoins size={18} />} title="Enter customer needs" />
-          <p className="panel-help">These are the main controls. Change them, then review the affordability and products to the right.</p>
-
-          <div className="field-block">
-            <div className="field-heading">
-              <strong>Loan purpose</strong>
-              <span>Choose one</span>
-            </div>
-          <div className="purpose-grid">
-            {purposes.map((purpose) => (
+      <section className="tile-board" aria-label="Loan journey tiles">
+        <article className="journey-tile input-tile">
+          <PanelTitle eyebrow="1" icon={<HandCoins size={18} />} title="Customer needs" />
+          <div className="purpose-row" aria-label="Loan purpose">
+            {purposes.slice(0, 4).map((purpose) => (
               <button
                 key={purpose.id}
-                className={purpose.id === journey.selectedPurpose ? "purpose active" : "purpose"}
+                className={purpose.id === journey.selectedPurpose ? "purpose-chip active" : "purpose-chip"}
                 onClick={() => refreshOptions({ selectedPurpose: purpose.id })}
               >
                 {purpose.icon}
@@ -370,9 +258,7 @@ function App() {
               </button>
             ))}
           </div>
-          </div>
-
-          <Field label="Loan amount" value={currency(journey.input.requestedAmount)}>
+          <Field label="Amount" value={currency(journey.input.requestedAmount)}>
             <input
               type="range"
               min="1000"
@@ -384,7 +270,6 @@ function App() {
               onTouchEnd={() => refreshOptions()}
             />
           </Field>
-
           <Field label="Term" value={`${journey.input.termMonths} months`}>
             <input
               type="range"
@@ -398,131 +283,83 @@ function App() {
             />
           </Field>
 
-          <div className="field-block">
-            <div className="field-heading">
-              <strong>Customer scenario</strong>
-              <span>Demo data</span>
-            </div>
-          <div className="scenario-row">
-            {scenarios.map((scenario) => (
-              <button
-                key={scenario.id}
-                className={scenario.id === journey.scenario ? "scenario active" : "scenario"}
-                onClick={() => refreshOptions({ scenario: scenario.id })}
-              >
-                <strong>{scenario.label}</strong>
-                <span>{scenario.tone}</span>
-              </button>
-            ))}
+          <div className="income-grid">
+            <NumberField label="Monthly income" value={journey.input.monthlyIncome} onChange={(value) => updateInput({ monthlyIncome: value })} onBlur={() => refreshOptions()} />
+            <NumberField label="Commitments" value={journey.input.monthlyCommitments} onChange={(value) => updateInput({ monthlyCommitments: value })} onBlur={() => refreshOptions()} />
+            <NumberField label="Housing cost" value={journey.input.housingCost} onChange={(value) => updateInput({ housingCost: value })} onBlur={() => refreshOptions()} />
+            <NumberField label="Dependants" value={journey.input.dependants} onChange={(value) => updateInput({ dependants: value })} onBlur={() => refreshOptions()} />
           </div>
+        </article>
+
+        <article className="journey-tile">
+          <PanelTitle eyebrow="2" icon={<Calculator size={18} />} title="Affordability" />
+          <div className="tile-metric-row">
+            <Metric label="Monthly" value={currency(journey.affordability.estimatedMonthlyPayment)} pulseKey={pulseKey} />
+            <Metric label="Guardrail" value={currency(journey.affordability.paymentCap)} pulseKey={pulseKey} />
           </div>
-
-          <button className="primary-action" onClick={() => refreshOptions()}>
-            Update affordability and options
-            <ArrowRight size={17} />
-          </button>
-          {isGuided ? <p className="mode-note">Demo mode is cycling examples. Stop it to enter values manually.</p> : null}
-        </aside>
-
-        <section className="affordability-panel reveal-panel" style={{ "--delay": "170ms" } as React.CSSProperties}>
-          <PanelTitle eyebrow="Step 2" icon={<Calculator size={18} />} title="Check affordability" />
-          <div className="status-block">
-            <div>
-              <p className="eyebrow">Current view</p>
-              <h2>{journey.affordability.status}</h2>
-              <p>{journey.affordability.notes[0]}</p>
-            </div>
-            <div className="radial" key={`radial-${pulseKey}`} style={{ "--progress": `${progress}%` } as React.CSSProperties}>
+          <div className="tile-status">
+            <div className="radial compact" key={`radial-${pulseKey}`} style={{ "--progress": `${progress}%` } as React.CSSProperties}>
               <span>{progress}%</span>
-              <small>of guardrail</small>
+              <small>used</small>
+            </div>
+            <div>
+              <strong>{journey.affordability.status}</strong>
+              <p>{journey.affordability.confidence} confidence</p>
             </div>
           </div>
+        </article>
 
-          <div className="insight-grid">
-            <Insight icon={<LineChart size={18} />} label="Disposable income" value={currency(journey.affordability.disposableIncome)} />
-            <Insight icon={<ShieldCheck size={18} />} label="Suggested ceiling" value={currency(journey.affordability.suggestedMaxBorrowing)} />
-            <Insight icon={<BadgeCheck size={18} />} label="Demo confidence" value={journey.affordability.confidence} />
-          </div>
-
-          <div className="note-list">
-            {journey.affordability.notes.slice(1).map((note) => (
-              <p key={note}>{note}</p>
-            ))}
-          </div>
-        </section>
-
-        <section className="products-panel reveal-panel" style={{ "--delay": "260ms" } as React.CSSProperties}>
-          <PanelTitle eyebrow="Step 3" icon={<Banknote size={18} />} title="Compare loan options" />
-          <div className={isRefreshing ? "product-list refreshing" : "product-list"}>
-            {journey.options.map((option, index) => (
-              <button
-                className={option.id === bestOption?.id ? "product active" : "product"}
-                key={option.id}
-                onClick={() => setSelectedProductId(option.id)}
-                style={{ "--delay": `${index * 110}ms`, "--score": `${option.eligibilityScore}%` } as React.CSSProperties}
-              >
-                <span className="fit-pill">{option.fit}</span>
-                <strong>{option.name}</strong>
-                <span>{option.highlight}</span>
-                <span className="score-track" aria-hidden="true" />
-                <div className="product-values">
-                  <span>{option.representativeApr}% APR</span>
-                  <span>{currency(option.monthlyPayment)} / mo</span>
-                  <span>{option.eligibilityScore}% fit</span>
-                </div>
-              </button>
-            ))}
-            {journey.options.length === 0 ? (
-              <div className="empty-state">
-                <strong>No matching demo products</strong>
-                <span>Try a lower amount, shorter term, or different purpose.</span>
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="detail-panel reveal-panel" style={{ "--delay": "350ms" } as React.CSSProperties}>
-          <PanelTitle eyebrow="Step 4" icon={<ClipboardList size={18} />} title="Choose the next best action" />
+        <article className="journey-tile">
+          <PanelTitle eyebrow="3" icon={<Banknote size={18} />} title="Best fit option" />
           {bestOption ? (
-            <>
-              <div className="selected-product">
-                <span className="fit-pill gold">{bestOption.fit}</span>
-                <h2>{bestOption.name}</h2>
-                <p>{bestOption.bestFor}</p>
-                <dl>
-                  <div>
-                    <dt>Total repayable</dt>
-                    <dd>{currency(bestOption.totalRepayable)}</dd>
-                  </div>
-                  <div>
-                    <dt>Total interest</dt>
-                    <dd>{currency(bestOption.totalInterest)}</dd>
-                  </div>
-                  <div>
-                    <dt>Fee</dt>
-                    <dd>{currency(bestOption.arrangementFee)}</dd>
-                  </div>
-                </dl>
-                <p className="caveat">{bestOption.caveat}</p>
+            <button className="option-tile active" onClick={() => setSelectedProductId(bestOption.id)} style={{ "--score": `${bestOption.eligibilityScore}%` } as React.CSSProperties}>
+              <span className="fit-pill">{bestOption.fit}</span>
+              <strong>{bestOption.name}</strong>
+              <small>{bestOption.representativeApr}% APR representative</small>
+              <span className="score-track" aria-hidden="true" />
+              <div className="option-summary">
+                <span>{currency(bestOption.monthlyPayment)} / mo</span>
+                <span>{bestOption.eligibilityScore}% fit</span>
               </div>
-              <div className="action-row">
-                <button onClick={() => askFollowUp(`Explain why ${bestOption.name} is the best option for this Greenbridge demo borrower.`)}>
-                  Explain recommendation
-                </button>
-                <button onClick={() => askFollowUp(`Prepare a digital application checklist for ${bestOption.name}.`)}>
-                  Prepare checklist
-                </button>
-              </div>
-            </>
-          ) : null}
-        </section>
-      </section>
+            </button>
+          ) : (
+            <div className="empty-state">
+              <strong>No matching option</strong>
+              <span>Change amount or term.</span>
+            </div>
+          )}
+        </article>
 
-      <footer className="demo-footer">
-        <span>{isRefreshing ? "Refreshing illustrative options..." : journey.demoNotice ?? fallbackJourney.demoNotice}</span>
-        <span>Built for ChatGPT MCP app demonstrations</span>
-      </footer>
+        <article className="journey-tile action-tile">
+          <PanelTitle eyebrow="4" icon={<ClipboardList size={18} />} title="Next action" />
+          <p>{bestOption ? bestOption.bestFor : "Pick an option to continue."}</p>
+          <div className="action-row compact-actions">
+            <button onClick={() => bestOption && askFollowUp(`Explain why ${bestOption.name} is the best option for this Greenbridge demo borrower.`)}>
+              Explain
+            </button>
+            <button onClick={() => bestOption && askFollowUp(`Prepare a digital application checklist for ${bestOption.name}.`)}>
+              Checklist
+            </button>
+          </div>
+          <small>{isRefreshing ? "Updating options..." : "Illustrative only. Not financial advice."}</small>
+        </article>
+      </section>
     </main>
+  );
+}
+
+function NumberField({ label, value, onChange, onBlur }: { label: string; value: number; onChange: (value: number) => void; onBlur: () => void }) {
+  return (
+    <label className="number-field">
+      <span>{label}</span>
+      <input
+        type="number"
+        min="0"
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        onBlur={onBlur}
+      />
+    </label>
   );
 }
 
