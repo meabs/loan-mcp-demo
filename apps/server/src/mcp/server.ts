@@ -47,7 +47,7 @@ export function makeMcpServer(args: {
 				{
 					uri: widgetUri,
 					mimeType: RESOURCE_MIME_TYPE,
-					text: readWidgetHtml(),
+					text: readWidgetHtml(args.config.publicBaseUrl),
 					_meta: {
 						'openai/widgetDescription':
 							'Playable vertical slice for The Last Bookshop.',

@@ -36,6 +36,7 @@ export function registerBookshopTools(server: McpServer, context: ToolContext): 
 		ui: {
 			resourceUri: widgetUri
 		},
+		'openai/widgetAccessible': true,
 		'openai/outputTemplate': widgetUri,
 		'openai/toolInvocation/invoking': 'Opening The Last Bookshop',
 		'openai/toolInvocation/invoked': 'The Last Bookshop is ready'

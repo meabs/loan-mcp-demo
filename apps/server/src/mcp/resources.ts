@@ -7,7 +7,7 @@ export const widgetUri = 'ui://last-bookshop/bookshop-v1.html'
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const rootDir = join(__dirname, '../../../..')
 
-export function readWidgetHtml(): string {
+export function readWidgetHtml(publicBaseUrl = ''): string {
 	const widgetDist = join(rootDir, 'apps/widget/dist')
 	const js = readFileSync(join(widgetDist, 'last-bookshop-widget.js'), 'utf8')
 	let css = ''
@@ -27,6 +27,7 @@ export function readWidgetHtml(): string {
 			</main>
 		</div>
 		<style>${css}</style>
+		<script>window.__LAST_BOOKSHOP_CONFIG__ = ${JSON.stringify({ publicBaseUrl })}</script>
 		<script type="module">${js}</script>
 	`.trim()
 }

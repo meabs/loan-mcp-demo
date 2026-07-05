@@ -48,7 +48,7 @@ export function createApp() {
 					<meta name="viewport" content="width=device-width, initial-scale=1" />
 					<title>The Last Bookshop</title>
 				</head>
-				<body>${readWidgetHtml()}</body>
+				<body>${readWidgetHtml(config.publicBaseUrl)}</body>
 			</html>`)
 	})
 
