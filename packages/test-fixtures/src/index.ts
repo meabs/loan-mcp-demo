@@ -1,0 +1,2 @@
+export const sampleResumeToken =
+	'test_resume_token_only_for_local_fixture_do_not_use_in_production'

@@ -2,8 +2,12 @@ node_modules/
 dist/
 server/dist/
 web/dist/
+apps/*/dist/
+packages/*/dist/
 .env
 .env.*
 !.env.example
 .DS_Store
 npm-debug.log*
+Cozy Bookshop – Pixel Art Asset Pack/
+cozy Cat Pack/

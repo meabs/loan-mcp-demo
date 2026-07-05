@@ -1,0 +1,23 @@
+services:
+  last-bookshop-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: last-bookshop-server
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - last-bookshop-data:/data
+    networks:
+      - last-bookshop-net
+    ports:
+      - '127.0.0.1:3100:3100'
+
+networks:
+  last-bookshop-net:
+    name: last-bookshop-net
+
+volumes:
+  last-bookshop-data:
+    name: last-bookshop-data
