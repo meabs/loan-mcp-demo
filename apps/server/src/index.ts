@@ -52,7 +52,7 @@ export function createApp() {
 			</html>`)
 	})
 
-	app.post('/mcp', async (req, res) => {
+	const handleMcpRequest: express.RequestHandler = async (req, res) => {
 		const server = makeMcpServer({ config, repository })
 		try {
 			const transport = new StreamableHTTPServerTransport({
@@ -77,7 +77,9 @@ export function createApp() {
 				})
 			}
 		}
-	})
+	}
+
+	app.post(['/', '/mcp'], handleMcpRequest)
 
 	app.get('/mcp', (_req, res) => {
 		res.status(405).json({
