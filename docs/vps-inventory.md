@@ -81,13 +81,23 @@ cloudflared.service         loaded active   running cloudflared
 greenbridge-loans.service   loaded active   running Greenbridge Loans MCP Demo
 ```
 
-Docker:
+Initial Docker state:
 
 ```text
 bash: line 1: docker: command not found
 ```
 
-No Docker containers, Compose projects, Docker networks, or Docker volumes exist because Docker is not installed.
+Docker was later installed for the isolated Last Bookshop deployment. The Loans MCP remains outside Docker.
+
+Current Last Bookshop Docker resources:
+
+```text
+Compose project: last-bookshop
+Container: last-bookshop-server
+Network: last-bookshop-net
+Volume: last-bookshop-data
+Port: 127.0.0.1:3100->3100
+```
 
 ## Confirmed live port bindings
 
@@ -162,4 +172,4 @@ Before Phase 4 deployment, re-run this inventory because the VPS may change:
 
 ## Phase 0 conclusion
 
-No direct resource collision was found for `/opt/last-bookshop` or port `3100`. Docker is absent, so Docker-based deployment cannot proceed until Docker installation is explicitly approved. Cloudflare is token-managed and remotely configured, so route changes cannot be made by editing a local config file.
+No direct resource collision was found for `/opt/last-bookshop` or port `3100`. Docker was installed after approval and used only for the `last-bookshop` Compose project. Cloudflare is token-managed and remotely configured; the game route was added remotely without editing a local config file or restarting Loans.

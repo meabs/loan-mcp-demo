@@ -25,7 +25,7 @@ The current VPS runs Loans MCP as:
 | Cloudflare Tunnel | `cloudflared.service`, token-managed remote ingress |
 | Cloudflare metrics port | `127.0.0.1:20241` |
 
-## Required Last Bookshop resources
+## Deployed Last Bookshop resources
 
 The Last Bookshop must use only these dedicated resources:
 
@@ -40,20 +40,20 @@ The Last Bookshop must use only these dedicated resources:
 | Database | `/data/last-bookshop.sqlite` |
 | Public hostname | `games-mcp.meaburn.com` |
 
-## Collision check
+## Deployment collision check
 
-Based on live VPS discovery:
+Based on live VPS discovery and deployment verification:
 
 | Area | Collision status | Notes |
 | --- | --- | --- |
-| Deployment path | No collision | `/opt/last-bookshop` does not exist |
-| Public hostname | No live DNS collision found | `games-mcp.meaburn.com` does not resolve |
-| Internal port | No collision | `3100` is not bound |
+| Deployment path | No collision | `/opt/last-bookshop` is used only by Last Bookshop |
+| Public hostname | No collision | `games-mcp.meaburn.com` routes only to Last Bookshop |
+| Internal port | No collision | `3100` is bound only by `last-bookshop-server` on `127.0.0.1` |
 | systemd service | No collision | No `last-bookshop` service exists |
-| Docker container | No collision, but Docker absent | Docker must be installed before Compose deployment |
-| Docker network | No collision, but Docker absent | Docker must be installed before Compose deployment |
-| Docker volume | No collision, but Docker absent | Docker must be installed before Compose deployment |
-| Cloudflare ingress | No route exists yet | Existing remote ingress routes Loans hostnames to `127.0.0.1:3000` |
+| Docker container | No collision | Only `last-bookshop-server` was created |
+| Docker network | No collision | Only `last-bookshop-net` was created |
+| Docker volume | No collision | Only `last-bookshop-data` was created |
+| Cloudflare ingress | No collision | Existing Loans hostnames still route to `127.0.0.1:3000`; game hostname routes to `127.0.0.1:3100` |
 
 ## Baseline requirement
 
@@ -69,11 +69,36 @@ Docker: command not found
 
 Because Loans MCP is not containerized, `docker inspect <loans-container>` is not applicable.
 
-## After-change verification requirement
+## After-change verification
 
-After every shared-infrastructure change, repeat the Loans health check and verify the Loans process or container has not restarted unexpectedly.
+After Docker installation:
 
-No after-change verification exists yet because no shared infrastructure has been changed.
+```text
+Loans health: {"ok":true,"service":"greenbridge-loans","mcp":"/mcp"}
+greenbridge-loans MainPID: 6002
+greenbridge-loans ActiveEnterTimestamp: Sat 2026-07-04 12:39:03 UTC
+```
+
+After Last Bookshop container start:
+
+```text
+Last Bookshop health: {"ok":true,"service":"the-last-bookshop","mcp":"/mcp","database":"sqlite",...}
+Loans health: {"ok":true,"service":"greenbridge-loans","mcp":"/mcp"}
+greenbridge-loans MainPID: 6002
+greenbridge-loans ActiveEnterTimestamp: Sat 2026-07-04 12:39:03 UTC
+```
+
+After Cloudflare route update:
+
+```text
+Public Last Bookshop health: https://games-mcp.meaburn.com/health -> healthy
+Public Last Bookshop MCP initialize: POST https://games-mcp.meaburn.com/mcp -> serverInfo.name "the-last-bookshop"
+Loans health: {"ok":true,"service":"greenbridge-loans","mcp":"/mcp"}
+greenbridge-loans MainPID: 6002
+greenbridge-loans ActiveEnterTimestamp: Sat 2026-07-04 12:39:03 UTC
+cloudflared MainPID: 4561
+cloudflared ActiveEnterTimestamp: Sat 2026-07-04 10:34:08 UTC
+```
 
 ## Stop conditions
 
@@ -93,4 +118,4 @@ Stop before deployment if any of the following are true:
 
 ## Current conclusion
 
-No live resource collision was found for the required Last Bookshop path, hostname, internal port, container name, network name, volume name, or database path. Phase 1 local implementation can proceed. Phase 4 deployment must explicitly account for Docker being absent, and Phase 5 routing must use Cloudflare remote tunnel management rather than a local config edit.
+The deployed game and the Loans MCP are isolated by path, process manager, port, runtime, public hostname, Docker container, Docker network, Docker volume, and database. Loans can continue to be updated through `/opt/greenbridge-loans` and `greenbridge-loans.service`; the game can be updated separately through `/opt/last-bookshop` and `docker compose -p last-bookshop`.

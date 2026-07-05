@@ -19,7 +19,9 @@ sed: can't read /etc/cloudflared/config.yml: No such file or directory
 
 `/etc/cloudflared` does not exist.
 
-The tunnel is remotely managed. Cloudflared logs show tunnel ID `18142af2-3ece-4764-9f95-d761e70061dd` and this remote ingress configuration:
+The tunnel is remotely managed. Cloudflared logs show tunnel ID `18142af2-3ece-4764-9f95-d761e70061dd`.
+
+Initial remote ingress configuration:
 
 ```json
 {
@@ -56,7 +58,7 @@ Cloudflared metrics port:
 
 ## Public route checks
 
-Checks from this environment:
+Initial checks from this environment:
 
 | Hostname | Result |
 | --- | --- |
@@ -66,13 +68,52 @@ Checks from this environment:
 
 The missing DNS result for `games-mcp.meaburn.com` suggests the Last Bookshop route is not currently active publicly, but this is not enough to modify Cloudflare safely.
 
-## Desired future route
+## Applied Last Bookshop route
 
 ```text
 games-mcp.meaburn.com -> http://127.0.0.1:3100
 ```
 
-This route must be added without replacing or reordering existing Loans MCP ingress entries except to keep the catch-all last.
+The route was added through Cloudflare remote tunnel configuration without replacing either Loans ingress entry. A backup of the prior tunnel configuration was saved on the VPS under:
+
+```text
+/root/cloudflare-tunnel-config-backups/
+```
+
+Current remote ingress order:
+
+```json
+[
+	{
+		"hostname": "loan.mcp.meaburn.com",
+		"service": "http://127.0.0.1:3000"
+	},
+	{
+		"hostname": "loan-mcp.meaburn.com",
+		"service": "http://127.0.0.1:3000"
+	},
+	{
+		"hostname": "games-mcp.meaburn.com",
+		"service": "http://127.0.0.1:3100"
+	},
+	{
+		"service": "http_status:404"
+	}
+]
+```
+
+The proxied DNS record `games-mcp.meaburn.com` was created as a CNAME to the tunnel.
+
+Post-change checks:
+
+| Endpoint | Result |
+| --- | --- |
+| `https://games-mcp.meaburn.com/health` | healthy |
+| `GET https://games-mcp.meaburn.com/mcp` | `405`, expected because MCP requires POST |
+| `POST https://games-mcp.meaburn.com/mcp` initialize | returned `serverInfo.name` as `the-last-bookshop` |
+| VPS-local Loans health | healthy |
+| `greenbridge-loans` PID/start time | unchanged |
+| `cloudflared` PID/start time | unchanged |
 
 ## Required safe Cloudflare workflow
 
@@ -87,4 +128,4 @@ For the current remotely managed tunnel:
 
 ## Current conclusion
 
-Cloudflare is remotely managed through a token-run tunnel. The safe path is to add the new hostname in Cloudflare's tunnel routing without replacing the existing Loans ingress entries. No Cloudflare change was made in Phase 0.
+Cloudflare is remotely managed through a token-run tunnel. The game route has been appended ahead of the catch-all while preserving both Loans routes. No cloudflared restart was required.

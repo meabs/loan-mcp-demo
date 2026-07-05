@@ -4,7 +4,7 @@ Last updated: 2026-07-05
 
 ## Current State
 
-Local implementation is complete for the vertical slice.
+The vertical slice is implemented, committed, pushed, and deployed to the VPS.
 
 Implemented:
 
@@ -32,13 +32,36 @@ Verified locally:
 - bookshop pixel-art sprites copied into `apps/widget/public/assets/bookshop/`
 - cat pixel-art sprites copied into `apps/widget/public/assets/cats/`
 
+Verified on VPS:
+
+- GitHub commit deployed: `0370f62 Add Last Bookshop ChatGPT app`
+- Docker installed without restarting Loans MCP
+- Last Bookshop cloned to `/opt/last-bookshop`
+- `.env` created only on the VPS and not committed
+- Docker Compose project: `last-bookshop`
+- Container: `last-bookshop-server`
+- Network: `last-bookshop-net`
+- Volume: `last-bookshop-data`
+- Port binding: `127.0.0.1:3100->3100`
+- VPS-local game health: `http://127.0.0.1:3100/health`
+- Public game health: `https://games-mcp.meaburn.com/health`
+- Public MCP initialize smoke test: `POST https://games-mcp.meaburn.com/mcp`
+
 Not yet completed:
 
-- VPS deployment
-- Docker installation on VPS
-- Cloudflare route update
-- MCP Inspector and ChatGPT developer mode test
+- MCP Inspector manual test
+- ChatGPT developer mode end-to-end game test
 
 ## Loans MCP Status
 
-Phase 0 confirmed the VPS-local Loans MCP health endpoint was healthy. No Loans MCP source, service, deployment path, or Cloudflare route was changed by this implementation work.
+The Loans MCP remained separate and healthy after Docker installation, Last Bookshop deployment, and Cloudflare route update.
+
+Latest verification:
+
+- Loans path: `/opt/greenbridge-loans`
+- Loans service: `greenbridge-loans`
+- Loans local port: `3000`
+- Loans health: `{"ok":true,"service":"greenbridge-loans","mcp":"/mcp"}`
+- Loans MainPID: `6002`
+- Loans active since: `Sat 2026-07-04 12:39:03 UTC`
+- No Loans source, service, deployment path, database, port, Docker resource, or Cloudflare hostname was changed.

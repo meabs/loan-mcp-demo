@@ -15,9 +15,34 @@ Public hostname: games-mcp.meaburn.com
 
 ## Current VPS Finding
 
-Docker is not installed on the VPS. The user has said Docker can be installed if helpful, but that is a deployment-phase infrastructure change and was not performed in Phase 0.
+Docker is now installed on the VPS for the Last Bookshop deployment.
 
 Loans MCP is a systemd Node process on port `3000`. Do not restart or rebuild it.
+
+## Completed Deployment
+
+The Last Bookshop was deployed from GitHub commit `0370f62`.
+
+```text
+Directory: /opt/last-bookshop
+Compose project: last-bookshop
+Container: last-bookshop-server
+Network: last-bookshop-net
+Volume: last-bookshop-data
+Local health: http://127.0.0.1:3100/health
+Public health: https://games-mcp.meaburn.com/health
+MCP endpoint: https://games-mcp.meaburn.com/mcp
+```
+
+The production `.env` exists only at `/opt/last-bookshop/.env` on the VPS and is not committed.
+
+Last successful public MCP smoke test:
+
+```text
+POST https://games-mcp.meaburn.com/mcp initialize
+serverInfo.name: the-last-bookshop
+serverInfo.version: 0.1.0
+```
 
 ## Safe Deployment Sequence
 
@@ -34,7 +59,28 @@ Loans MCP is a systemd Node process on port `3000`. Do not restart or rebuild it
 11. Verify public `/health` and `/mcp`.
 12. Re-check Loans health and service start timestamp.
 
+## Separate Update Paths
+
+Update Loans separately:
+
+```bash
+cd /opt/greenbridge-loans
+# Use the existing Loans deployment workflow only.
+systemctl status greenbridge-loans
+```
+
+Update Last Bookshop separately:
+
+```bash
+cd /opt/last-bookshop
+git pull
+docker compose -p last-bookshop build
+docker compose -p last-bookshop up -d
+curl -fsS http://127.0.0.1:3100/health
+```
+
+Do not run Docker Compose commands from `/opt/greenbridge-loans`, and do not use `docker compose down` outside `/opt/last-bookshop`.
+
 ## Rollback
 
 Use `scripts/rollback.sh` from `/opt/last-bookshop`. It stops only `last-bookshop-server`.
-
